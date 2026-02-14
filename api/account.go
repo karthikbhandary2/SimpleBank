@@ -2,10 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/karthikbhandary2/simplebank/db/sqlc"
+	"github.com/lib/pq"
 )
 
 type createAccountRequest struct {
@@ -28,6 +30,13 @@ func (server *Server) createAccount(ctx *gin.Context) {
 
 	account, err := server.store.CreateAccount(ctx, arg)
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -81,26 +90,34 @@ func (server *Server) listAccount(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, accounts)
 }
 
-type updateAccountRequest struct {
-	ID int64 `uri:"id" binding:"required, min=1"`
-	Balance int64 `json:"balance" binding:"required, min=1"`
+type updateAccountID struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
+	
+}
+
+type updateAccountBody struct {
+	Balance int64 `json:"balance" binding:"required"`
 }
 
 func (server *Server) updateAccount(ctx *gin.Context) {
-	var req updateAccountRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
+	fmt.Println("Update account handler triggered")
+	var id updateAccountID
+	if err := ctx.ShouldBindUri(&id); err != nil {
+		fmt.Println("URI bind error:", err)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	var body updateAccountBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		fmt.Println("JSON binding error:", err)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	
 
 	arg := db.UpdateAccountParams{
-		ID: req.ID,
-		Balance: req.Balance,
+		ID: id.ID,
+		Balance: body.Balance,
 	}
 	account, err := server.store.UpdateAccount(ctx, arg)
 	if err != nil {
