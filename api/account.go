@@ -23,9 +23,9 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	}
 
 	arg := db.CreateAccountParams{
-		Owner: req.Owner,
+		Owner:    req.Owner,
 		Currency: req.Currency,
-		Balance: 0,
+		Balance:  0,
 	}
 
 	account, err := server.store.CreateAccount(ctx, arg)
@@ -68,7 +68,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 }
 
 type listAccountRequest struct {
-	PageID int32 `form:"page_id" binding:"required,min=1"`
+	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
 }
 
@@ -79,7 +79,7 @@ func (server *Server) listAccount(ctx *gin.Context) {
 		return
 	}
 	arg := db.ListAccountsParams{
-		Limit: req.PageSize,
+		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
 	accounts, err := server.store.ListAccounts(ctx, arg)
@@ -92,7 +92,6 @@ func (server *Server) listAccount(ctx *gin.Context) {
 
 type updateAccountID struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
-	
 }
 
 type updateAccountBody struct {
@@ -113,10 +112,9 @@ func (server *Server) updateAccount(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	
 
 	arg := db.UpdateAccountParams{
-		ID: id.ID,
+		ID:      id.ID,
 		Balance: body.Balance,
 	}
 	account, err := server.store.UpdateAccount(ctx, arg)
