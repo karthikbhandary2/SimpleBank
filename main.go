@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/karthikbhandary2/simplebank/api"
 	db "github.com/karthikbhandary2/simplebank/db/sqlc"
@@ -14,9 +15,14 @@ import (
 	"github.com/karthikbhandary2/simplebank/pb"
 	"github.com/karthikbhandary2/simplebank/util"
 	_ "github.com/lib/pq"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	_ "github.com/karthikbhandary2/simplebank/doc/statik"
 )
 
 func main() {
@@ -29,9 +35,23 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 
+	runDBMigration(config.MigrationURL, config.DBSource)
+
+
 	store := db.NewStore(conn)
 	go runGatewayServer(config, store)
 	runGRPCServer(config, store)
+}
+
+func runDBMigration(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal("cannot create new migration instance", err)
+	}
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to migrate up", err)
+	}
+	log.Println("db migrated successfully")
 }
 
 func runGRPCServer(config util.Config, store db.Store) {
@@ -74,13 +94,22 @@ func runGatewayServer(config util.Config, store db.Store) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
+	err = pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
 	if err != nil {
 		log.Fatal("cannot register handler server", err)
 	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
+
+	staticFS, err := fs.New()
+	if err != nil {
+		log.Fatal("cannot create statik fs", err)
+	}
+	
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(staticFS))
+	mux.Handle("/swagger/", swaggerHandler)
+
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
 		log.Fatal("cannot create listener", err)
