@@ -16,6 +16,7 @@ type Store interface {
 	Querier
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 	CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error)
+	VerifyEmailTx(ctx context.Context, arg VerifyEmailTxParams) (VerifyEmailTxResult, error)
 }
 
 // NewStore creates a new Store
@@ -43,4 +44,3 @@ func (s *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	}
 	return tx.Commit()
 }
-
