@@ -10,7 +10,6 @@ package gapi
 // 	"github.com/karthikbhandary2/simplebank/util"
 // 	"github.com/karthikbhandary2/simplebank/val"
 
-// 	// "github.com/karthikbhandary2/simplebank/val"
 // 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 // 	"google.golang.org/grpc/codes"
 // 	"google.golang.org/grpc/status"

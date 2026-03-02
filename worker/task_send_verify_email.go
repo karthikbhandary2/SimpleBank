@@ -19,8 +19,8 @@ type PayloadSendVerifyEmail struct {
 const TaskSendVerifyEmail = "task:send_verify_email"
 
 func (distributor *RedisTaskDistributor) DistributeTaskSendVerifyEmail(
-	ctx context.Context, 
-	payload *PayloadSendVerifyEmail, 
+	ctx context.Context,
+	payload *PayloadSendVerifyEmail,
 	opts ...asynq.Option,
 ) error {
 	jsonPayload, err := json.Marshal(payload)
@@ -43,15 +43,15 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 	}
 	user, err := processor.store.GetUser(ctx, payload.Username)
 	if err != nil {
-		// if err == sql.ErrNoRows {
+		// if errors.Is(err, ErrRecordNotFound) {
 		// 	return fmt.Errorf("user doesn't exist: %w", asynq.SkipRetry)
 		// }
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
 	verifyEmail, err := processor.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
-		Username: user.Username,
-		Email: user.Email,
+		Username:   user.Username,
+		Email:      user.Email,
 		SecretCode: util.RandomString(32),
 	})
 	if err != nil {

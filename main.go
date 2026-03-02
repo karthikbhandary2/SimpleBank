@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"net"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/karthikbhandary2/simplebank/api"
 	db "github.com/karthikbhandary2/simplebank/db/sqlc"
 	"github.com/karthikbhandary2/simplebank/gapi"
@@ -19,7 +19,6 @@ import (
 	"github.com/karthikbhandary2/simplebank/pb"
 	"github.com/karthikbhandary2/simplebank/util"
 	"github.com/karthikbhandary2/simplebank/worker"
-	_ "github.com/lib/pq"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -40,7 +39,7 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	conn, err := sql.Open(config.DBDriver, config.DBSource)
+	connPool, err := pgxpool.New(context.Background(), config.DBSource)
 	if err != nil {
 		log.Fatal().Msg("cannot connect to db:")
 	}
@@ -48,7 +47,7 @@ func main() {
 	runDBMigration(config.MigrationURL, config.DBSource)
 
 
-	store := db.NewStore(conn)
+	store := db.NewStore(connPool)
 
 	redisOpt := asynq.RedisClientOpt{
 		Addr: config.RedisAddress,

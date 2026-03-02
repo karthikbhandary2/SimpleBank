@@ -1,7 +1,7 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"net/http"
 	"time"
 
@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	db "github.com/karthikbhandary2/simplebank/db/sqlc"
 	"github.com/karthikbhandary2/simplebank/util"
-	"github.com/lib/pq"
 )
 
 type createUserRequest struct {
@@ -57,12 +56,9 @@ func (server *Server) createUser(ctx *gin.Context) {
 
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				ctx.JSON(http.StatusForbidden, errorResponse(err))
-				return
-			}
+		if db.ErrorCode(err) == db.UniqueViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -95,7 +91,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	}
 	user, err := server.store.GetUser(ctx, req.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -137,12 +133,12 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	})
 
 	resp := loginUserResponse{
-		SessionID: session.ID,
-		AccessToken: accessToken,
-		AccessTokenExpiresAt: accessTokenPayload.ExpiredAt,
-		RefreshToken: refreshToken,
+		SessionID:             session.ID,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  accessTokenPayload.ExpiredAt,
+		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: refreshTokenPayload.ExpiredAt,
-		User:        newUserResponse(user),
+		User:                  newUserResponse(user),
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
