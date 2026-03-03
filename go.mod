@@ -3,9 +3,11 @@ module github.com/karthikbhandary2/simplebank
 go 1.25.7
 
 require (
+	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-playground/validator/v10 v10.30.1
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0
@@ -14,10 +16,12 @@ require (
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/o1egl/paseto v1.0.0
 	github.com/rakyll/statik v0.1.8
+	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.48.0
+	golang.org/x/sync v0.19.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57
 	google.golang.org/grpc v1.79.1
@@ -26,7 +30,6 @@ require (
 
 require (
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
-	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb // indirect
 	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
@@ -70,7 +73,6 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.24.0 // indirect
 	golang.org/x/net v0.50.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.14.0 // indirect

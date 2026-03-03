@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aead/chacha20poly1305"
 	"github.com/o1egl/paseto"
-	"golang.org/x/crypto/chacha20poly1305"
 )
 
 // PasetoMaker is a PASETO token maker
 type PasetoMaker struct {
-	paseto *paseto.V2
+	paseto       *paseto.V2
 	symmetricKey []byte
 }
 
@@ -21,22 +21,26 @@ func NewPasetoMaker(symmetricKey string) (Maker, error) {
 	}
 
 	maker := &PasetoMaker{
-		paseto: paseto.NewV2(),
+		paseto:       paseto.NewV2(),
 		symmetricKey: []byte(symmetricKey),
 	}
+
 	return maker, nil
 }
 
-func (maker *PasetoMaker) CreateToken(username string, role string, duration time.Duration) (string, *Payload , error){
-	payload, err := NewPayload(username, role, duration)
+// CreateToken creates a new token for a specific username and duration
+func (maker *PasetoMaker) CreateToken(username string, role string, duration time.Duration, tokenType TokenType) (string, *Payload, error) {
+	payload, err := NewPayload(username, role, duration, tokenType)
 	if err != nil {
 		return "", payload, err
 	}
-	token, err :=  maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
+
+	token, err := maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
 	return token, payload, err
 }
 
-func (maker *PasetoMaker) VerifyToken(token string) (*Payload, error){
+// VerifyToken checks if the token is valid or not
+func (maker *PasetoMaker) VerifyToken(token string, tokenType TokenType) (*Payload, error) {
 	payload := &Payload{}
 
 	err := maker.paseto.Decrypt(token, maker.symmetricKey, payload, nil)
@@ -44,10 +48,10 @@ func (maker *PasetoMaker) VerifyToken(token string) (*Payload, error){
 		return nil, ErrInvalidToken
 	}
 
-	err = payload.Valid()
+	err = payload.Valid(tokenType)
 	if err != nil {
 		return nil, err
 	}
 
 	return payload, nil
-}	
+}
