@@ -1,3 +1,4 @@
 go.mod
 *.log
 node-modules
+app.env
